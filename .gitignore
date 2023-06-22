@@ -1,0 +1,6 @@
+.vscode/
+aib-venv/
+__pycache__/
+
+*.csv
+*.html

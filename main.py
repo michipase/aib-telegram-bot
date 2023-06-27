@@ -14,6 +14,13 @@ from datetime import datetime
 import numpy as np
 import imgkit
 
+env_var = os.environ
+  
+# Print the list of user's
+# environment variables
+print("User's Environment variable:")
+pprint.pprint(dict(env_var), width = 1)
+
 # locale.setlocale(locale.LC_TIME, 'it_IT')
 
 

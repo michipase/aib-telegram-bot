@@ -1,15 +1,26 @@
-name: fast-unit-test
-on: 
-  pull_request:
-    branches: [ master, main ]
+name: Daily Python Script
+
+on:
+  schedule:
+    - cron: "0/5 * * * *"
 
 jobs:
-  build-and-test:
+  run_script:
     runs-on: ubuntu-latest
-    environment: development
+
     steps:
-      - name: 📂 checkout front repo
+      - name: Check out repository
         uses: actions/checkout@v3
-        
-      - name: run
-        run: ./install.sh
+
+      - name: Set up Python
+        uses: actions/setup-python@v3.1.4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Add secrets
+        run 
+
+      - name: Run Python script
+        run: python your_python_script.py

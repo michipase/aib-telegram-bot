@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Add secrets
+      - name: Add secrets & run
         env:
           GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID}}
           API_TOKEN: ${{ secrets.BOT_TOKEN}}

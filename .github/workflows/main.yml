@@ -25,4 +25,4 @@ jobs:
           sed -i "s/<GROUP_CHAT_ID>/${{ secrets.GROUP_CHAT_ID }}/g" creds.py
 
       - name: Run Python script
-        run: python your_python_script.py
+        run: python main.py

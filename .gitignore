@@ -1,5 +1,6 @@
 .vscode/
 aib-venv/
+venv/
 __pycache__/
 log.txt
 media/

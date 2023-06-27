@@ -18,6 +18,8 @@ jobs:
         uses: actions/setup-python@v3.1.4
         with:
           python-version: 3.x
+      - name: install dependencies
+        run: ./install.sh
 
       - name: Install dependencies
         run: pip install -r requirements.txt

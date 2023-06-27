@@ -1,6 +1,7 @@
 .vscode/
 aib-venv/
 __pycache__/
-
+log.txt
+media/
 *.csv
 *.html

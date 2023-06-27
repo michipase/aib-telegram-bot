@@ -24,6 +24,6 @@ jobs:
       - name: Add secrets
         env:
           GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID}}
-          API_TOKEN: ${{ secrets.API_TOKEN}}
+          API_TOKEN: ${{ secrets.BOT_TOKEN}}
       - name: Run Python script
         run: python main.py

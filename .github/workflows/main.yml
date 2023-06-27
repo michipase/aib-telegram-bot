@@ -22,9 +22,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Add secrets
-        run: |
-          sed -i "s/<BOT_TOKEN>/${{ secrets.BOT_TOKEN }}/g" creds.py
-          sed -i "s/<GROUP_CHAT_ID>/${{ secrets.GROUP_CHAT_ID }}/g" creds.py
-
+        env:
+          GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID}
+          API_TOKEN: ${{ secrets.API_TOKEN}
       - name: Run Python script
         run: python main.py

@@ -23,7 +23,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Add secrets
         env:
-          GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID}
-          API_TOKEN: ${{ secrets.API_TOKEN}
+          GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID}}
+          API_TOKEN: ${{ secrets.API_TOKEN}}
       - name: Run Python script
         run: python main.py

@@ -1,13 +1,7 @@
 name: Daily run
-
 on:
   schedule:
-    - cron: "0/5 * * * *"
-  pull_request:
-    branches: ['main']
-  push:
-    branches: main
-
+    - cron: "5 15 * * *"
 env:
   GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID }}
   BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
@@ -17,21 +11,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repository
+      - name: 📁 Check out repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v3.1.4
         with:
           python-version: 3.x
-      - name: install packages
+
+      - name: 🛠️ Update system
         run: ./install.sh
 
-      - name: Install dependencies
+      - name: ⚙️ Install python dependencies
         run: pip install -r requirements.txt
 
-      - name: Add secrets
-        run: python -c "import os; print(os.getenv('BOT_TOKEN'))"
-
-      - name: run
+      - name: 🚀 Run
         run: python main.py

@@ -1,0 +1,37 @@
+name: Daily run
+
+on:
+  schedule:
+    - cron: "0/5 * * * *"
+  pull_request:
+    branches: ['main']
+  push:
+    branches: main
+
+env:
+  GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID }}
+  BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+
+jobs:
+  run_script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3.1.4
+        with:
+          python-version: 3.x
+      - name: install packages
+        run: ./install.sh
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Add secrets
+        run: python -c "import os; print(os.getenv('BOT_TOKEN'))"
+
+      - name: run
+        run: python main.py

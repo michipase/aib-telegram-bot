@@ -1,0 +1,30 @@
+html{
+    background-color: aliceblue;
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    width: fit-content;
+}
+caption {
+    padding: 1em;
+    background-color: rgba(0 0 0/ .1);
+    border-radius: .5em;
+    margin-bottom: 1em;
+}
+
+table {
+    border: none;
+    border-spacing: 0 1px;
+    width: 100%;
+}
+
+table tbody {
+    border-radius: 1em;
+}
+
+th {
+    display: none;
+    border: none;
+}
+
+td {
+    padding: .5em 1em;
+}

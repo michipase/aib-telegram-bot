@@ -37,21 +37,21 @@ def risk_condition(v):
     return "ALTO"
 
 def color_row(row):
-    if row['FWI'] < MAX_LOW:
+    if row['FWI'] <= MAX_LOW:
         return ['background-color: #00ff00'] * len(row)
-    elif MAX_LOW <= row['FWI'] < MAX_MEDIUM:
+    elif MAX_LOW < row['FWI'] <= MAX_MEDIUM:
         return ['background-color: #ffff00'] * len(row)
-    elif MAX_MEDIUM <= row['FWI'] < MAX_HIGH:
+    elif MAX_MEDIUM < row['FWI'] <= MAX_HIGH:
         return ['background-color: #ffaa00'] * len(row)
     else:
         return ['background-color: #ff0000'] * len(row)
 
 def calc_risk(fwi):
-    if fwi < MAX_LOW:
+    if fwi <= MAX_LOW:
         return "BASSO"
-    elif MAX_LOW <= fwi < MAX_MEDIUM:
+    elif MAX_LOW < fwi <= MAX_MEDIUM:
         return "MEDIO"
-    elif MAX_MEDIUM <= fwi < MAX_HIGH:
+    elif MAX_MEDIUM < fwi <= MAX_HIGH:
         return "ALTO"
     else:
         return "MOLTO ALTO"
@@ -59,11 +59,11 @@ def set_fill(id,df):
     a = df.loc[df['ZONA'] == id, 'FWI']
     fwi = a.iloc[0]
 
-    if fwi < MAX_LOW:
+    if fwi <= MAX_LOW:
         return "#00ff00"
-    elif MAX_LOW <= fwi < MAX_MEDIUM:
+    elif MAX_LOW < fwi <= MAX_MEDIUM:
         return "#ffff00"
-    elif MAX_MEDIUM <= fwi < MAX_HIGH:
+    elif MAX_MEDIUM < fwi <= MAX_HIGH:
         return "#ffaa00"
     else:
         return "#ff0000"

@@ -147,7 +147,7 @@ async def main():
         media.append(InputMediaPhoto(
             media=open(map_path, 'rb'),
             parse_mode="HTML", 
-            caption="🔥🌲<b>NUOVO BOLLETTINO %s</b>\nOgni giorno un nuovo bollettino di pericolo incendi boschivi.\n<a href=\"https://www.ambienteveneto.it/stazioni/incendi/index.html\">Ulteriori informazioni</a>\nProssimo bollettino ore 15:00 di domani!"%(date))
+            caption="🔥🌲<b>NUOVO BOLLETTINO %s</b>\nOgni giorno un nuovo bollettino di pericolo incendi boschivi.\n<a href=\"https://www.ambienteveneto.it/stazioni/incendi/index.html\">Ulteriori informazioni</a>\nProssimo bollettino domani pomeriggio!"%(date))
         )
         media.append(InputMediaPhoto(media=open(table_path, 'rb')))
 

@@ -27,3 +27,8 @@ jobs:
 
       - name: 🚀 Run
         run: python main.py
+      - name: 🔮 COMPLETED!
+        run: |
+          dt=$(date '+%d/%m/%Y %H:%M:%S');
+          echo "COMPLETED AT $dt"
+        

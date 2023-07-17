@@ -1,7 +1,10 @@
 name: Daily run
 on:
   schedule:
-    - cron: "5 15 * * *"
+    - cron: "5 13 * * *"
+  push:
+    branches:
+      - main
 env:
   GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID }}
   BOT_TOKEN: ${{ secrets.BOT_TOKEN }}

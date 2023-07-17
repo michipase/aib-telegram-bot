@@ -9,9 +9,10 @@ from datetime import datetime
 import numpy as np
 import imgkit
 from dotenv import load_dotenv
-# locale.setlocale(locale.LC_TIME, 'it_IT')
-# BOT_TOKEN = os.environ["BOT_TOKEN"]
-# GROUP_CHAT_ID = os.environ["GROUP_CHAT_ID"]
+
+locale.setlocale(locale.LC_TIME, 'it_IT')
+BOT_TOKEN = os.environ["BOT_TOKEN"]
+GROUP_CHAT_ID = os.environ["GROUP_CHAT_ID"]
 try:
     BOT_TOKEN = os.environ['BOT_TOKEN']
     GROUP_CHAT_ID = os.environ['GROUP_CHAT_ID']
@@ -23,10 +24,10 @@ except:
 if BOT_TOKEN is None or GROUP_CHAT_ID is None:
     print('Missing Tokens')
     quit()
-
 bot = Bot(token=BOT_TOKEN)
+
 MAX_LOW = 16    #! TO CHECK
-MAX_MEDIUM = 24 #! TO CHECK
+MAX_MEDIUM = 25 #! TO CHECK
 MAX_HIGH = 32   #! TO CHECK
 
 def risk_condition(v):
@@ -116,6 +117,9 @@ async def main():
 
         # make it cool
         formatted_table = df.sort_values('name', ignore_index=True)[['name', 'FWI', 'RISCHIO']]
+
+        print(formatted_table)
+
         styled_df = formatted_table.style \
             .apply(color_row, axis=1) \
             .format(precision=2, thousands=".", decimal=",") \

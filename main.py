@@ -10,7 +10,8 @@ import numpy as np
 import imgkit
 from dotenv import load_dotenv
 
-locale.setlocale(locale.LC_TIME, 'it_IT')
+# locale.setlocale(locale.LC_TIME, 'it_IT')
+
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 GROUP_CHAT_ID = os.environ["GROUP_CHAT_ID"]
 try:

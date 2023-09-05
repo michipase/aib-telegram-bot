@@ -27,37 +27,26 @@ if BOT_TOKEN is None or GROUP_CHAT_ID is None:
     quit()
 bot = Bot(token=BOT_TOKEN)
 
-MAX_LOW = 16    #! TO CHECK
-MAX_MEDIUM = 25 #! TO CHECK
-MAX_HIGH = 32   #! TO CHECK
-
-def risk_condition(v):
-    if v < MAX_LOW:
-        return "BASSO"
-    elif v < MAX_MEDIUM:
-        return "MEDIO"
-    return "ALTO"
-
 def color_row(row):
     try:
-        if row['FWI'] <= MAX_LOW:
+        if row['INDICE'] <= 2:
             return ['background-color: #00ff00'] * len(row)
-        elif MAX_LOW < row['FWI'] <= MAX_MEDIUM:
+        elif row['INDICE'] == 3:
             return ['background-color: #ffff00'] * len(row)
-        elif MAX_MEDIUM < row['FWI'] <= MAX_HIGH:
+        elif row['INDICE'] == 4:
             return ['background-color: #ffaa00'] * len(row)
         else:
             return ['background-color: #ff0000'] * len(row)
     except:
         return ['background-color: #cccccc'] * len(row)
 
-def calc_risk(fwi):
+def calc_risk(indice):
     try:
-        if fwi <= MAX_LOW:
+        if indice <= 2:
             return "BASSO"
-        elif MAX_LOW < fwi <= MAX_MEDIUM:
+        elif indice == 3:
             return "MEDIO"
-        elif MAX_MEDIUM < fwi <= MAX_HIGH:
+        elif indice == 4:
             return "ALTO"
         else:
             return "MOLTO ALTO"
@@ -66,14 +55,14 @@ def calc_risk(fwi):
 
 def set_fill(id,df):
     try:
-        a = df.loc[df['ZONA'] == id, 'FWI']
-        fwi = a.iloc[0]
+        a = df.loc[df['ZONA'] == id, 'INDICE']
+        indice = a.iloc[0]
 
-        if fwi <= MAX_LOW:
+        if indice <= 2:
             return "#00ff00"
-        elif MAX_LOW < fwi <= MAX_MEDIUM:
+        elif indice == 3:
             return "#ffff00"
-        elif MAX_MEDIUM < fwi <= MAX_HIGH:
+        elif indice == 4:
             return "#ffaa00"
         else:
             return "#ff0000"
@@ -112,7 +101,7 @@ async def main():
         # filter for useful id
         df = df[df['id'] <= 26]
 
-        df['RISCHIO'] = df.apply(lambda x: calc_risk(x['FWI']), axis=1)
+        df['RISCHIO'] = df.apply(lambda x: calc_risk(x['INDICE']), axis=1)
 
         df['name'] = np.where(df['name'].str.contains('Non Montana'),
                             df['name'].str.replace('Non Montana ', '') + ' Non Montana',
@@ -127,7 +116,7 @@ async def main():
         map_svg = map_soup.prettify()
 
         # make it cool
-        formatted_table = df.sort_values('name', ignore_index=True)[['name', 'FWI', 'RISCHIO']]
+        formatted_table = df.sort_values('name', ignore_index=True)[['name', 'FWI', 'INDICE', 'RISCHIO']]
 
         print(formatted_table)
 

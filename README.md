@@ -1,2 +1,3 @@
 # aib-telegram-bot 🔥🌲
-THis is an unofficial work-in progress telegram bot which sends a daily reminder of AIB risk in Veneto region.
+This is an unofficial-WIP telegram bot which sends a daily reminder of AIB risk in Veneto region.  
+You can join the channel [https://t.me/AIBVenetoBollettini](https://t.me/AIBVenetoBollettini)

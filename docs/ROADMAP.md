@@ -58,10 +58,41 @@ Deliverables:
   - source timestamp,
   - plain-language recommendations.
 
+Execution plan (recommended):
+
+- Week 1:
+  - finalize source shortlist for geolocated lookup (official first),
+  - freeze normalized schema and source confidence model,
+  - import reference boundaries (ISTAT + regional layers).
+- Week 2:
+  - implement spatial storage and indexes,
+  - implement point-in-polygon service with fallback matching,
+  - validate mapping with a fixed test set of known coordinates.
+- Week 3:
+  - implement `GET /risk` endpoint with source attribution and timestamps,
+  - add stale-source detection and fallback chain,
+  - add structured API error model.
+- Week 4:
+  - performance tuning (cache + indexes),
+  - integration tests across pilot regions,
+  - publish runbook for source failures.
+- Weeks 5-6 (buffer / extension):
+  - add more regions,
+  - harden observability and SLO alerts,
+  - complete legal attribution checks per source.
+
+Dependencies:
+
+- Source registry maintained in `docs/OFFICIAL_AIB_SOURCES_ITALY.md` and mirrored to `sources.yml`.
+- Stable geospatial identifiers for regional zones.
+- Contact/fallback channel per region for bulletin outages.
+
 Exit criteria:
 
 - P95 API latency <300ms for lookup endpoint.
 - Correct zone mapping on test set.
+- Fallback source chain tested for every pilot region.
+- Source attribution exposed in API response.
 
 ## Phase 3 - Authentication and subscriptions (3-5 weeks)
 

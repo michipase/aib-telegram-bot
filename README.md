@@ -36,6 +36,9 @@ This project aims to make official wildfire-risk information easier to consume.
 - `zone.json`: Veneto zone metadata
 - `style/df_style.css`: style for generated risk table
 - `.github/workflows/main.yml`: scheduled daily run
+- `VERSION`: app version in MAJOR.MINOR.PATCH format
+- `.githooks/pre-commit`: repository-managed hook for patch auto-bump
+- `scripts/bump-version.sh`: patch bump helper script
 - `docs/TECH_ANALYSIS.md`: technical code analysis and improvement areas
 - `docs/DATA_SOURCES_ITALY.md`: research and source strategy for Italy-wide data
 - `docs/ROADMAP.md`: product and engineering roadmap
@@ -83,6 +86,21 @@ python main.py
 ```
 
 Generated media is saved under `media/`.
+
+## Versioning
+
+- `VERSION` starts at `0.0.0`.
+- Patch (`x.y.Z`) is incremented automatically on each commit via pre-commit hook.
+- Major/minor (`X.Y.z`) are manual and must be edited directly in `VERSION`.
+- The hook updates `VERSION` and stages it automatically.
+
+If hooks are not active yet, run:
+
+```bash
+./install.sh
+```
+
+This configures `core.hooksPath` to `.githooks`.
 
 ## GitHub Actions schedule
 

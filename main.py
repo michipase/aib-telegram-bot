@@ -1,5 +1,4 @@
 import os
-import requests
 import json
 import asyncio
 from bs4 import BeautifulSoup
@@ -10,10 +9,10 @@ import numpy as np
 import imgkit
 from dotenv import load_dotenv
 
+from collectors import VenetoConnector
+
 # locale.setlocale(locale.LC_TIME, 'it_IT')
 
-BOT_TOKEN = os.environ["BOT_TOKEN"]
-GROUP_CHAT_ID = os.environ["GROUP_CHAT_ID"]
 try:
     BOT_TOKEN = os.environ['BOT_TOKEN']
     GROUP_CHAT_ID = os.environ['GROUP_CHAT_ID']
@@ -73,43 +72,17 @@ def set_fill(id,df):
 
 async def main():
     with open("log.txt", "w+") as log:
-        
-        with open("zone.json", "r") as f:
-            zone = json.load(f)
-
-        if not zone:
-            return
-        
-        # create zone dataframe from file
-        df = pd.DataFrame(zone, columns=['id', 'name'])
-
-        # get zone danger
-        a = requests.get("https://www.ambienteveneto.it/incendi/dati/FWI.json", verify=False).json()
-
-        d = datetime.strptime(str(a['GIORNI'][0]['GIORNO']), "%Y%m%d")
-        date = d.strftime("%d/%m/%y")
-
-        # extract date
-        data = a["GIORNI"][0]["ZONE"]
-
-        # create danger dataframe
-        d_danger = pd.DataFrame(data)
-
-        # merge zone names dataframe to danger dataframe
-        df = pd.merge(df, d_danger, how='inner', left_on='id',right_on='ZONA')
-        df['id'] = pd.to_numeric(df['id'], errors='coerce')
-        # filter for useful id
-        df = df[df['id'] <= 26]
-
-        df['RISCHIO'] = df.apply(lambda x: calc_risk(x['INDICE']), axis=1)
-
-        df['name'] = np.where(df['name'].str.contains('Non Montana'),
-                            df['name'].str.replace('Non Montana ', '') + ' Non Montana',
-                            df['name'])
+        connector = VenetoConnector(
+            "zone.json",
+            verify_ssl=os.getenv("VENETO_SOURCE_VERIFY_SSL", "false").lower() == "true",
+        )
+        bulletin = connector.parse_bulletin(connector.fetch_source())
+        date = bulletin.valid_for_date.strftime("%d/%m/%y")
+        df = pd.DataFrame([entry.to_dict() for entry in bulletin.entries])
+        df.rename(columns={"zone_id": "id", "zone_name": "name", "fwi": "FWI", "indice": "INDICE", "risk_level": "RISCHIO"}, inplace=True)
 
         ## MAP
-        veneto_map = requests.get("https://www.ambienteveneto.it/stazioni/incendi/venetorischio.html", verify=False).content
-        map_soup = BeautifulSoup(veneto_map, 'lxml')
+        map_soup = BeautifulSoup(connector.fetch_map_svg(), 'lxml')
         gs = map_soup.find_all(name="g", id=lambda value: value and "GI_" in value)
         for g in gs:
             g['fill'] = set_fill(g['id'][3:],df)
@@ -128,8 +101,9 @@ async def main():
 
         styled_html = styled_df.to_html(index=False, classes="df_style.css")
 
-        table_path = 'media/%s_table.jpg'%(str(a['GIORNI'][0]['GIORNO']))
-        map_path = 'media/%s_map.jpg'%(str(a['GIORNI'][0]['GIORNO']))
+        output_day = bulletin.valid_for_date.strftime("%Y%m%d")
+        table_path = 'media/%s_table.jpg'%(output_day)
+        map_path = 'media/%s_map.jpg'%(output_day)
 
         table = imgkit.from_string(
             styled_html,
@@ -151,7 +125,7 @@ async def main():
         media.append(InputMediaPhoto(
             media=open(map_path, 'rb'),
             parse_mode="HTML", 
-            caption="🔥🌲<b>NUOVO BOLLETTINO %s</b>\nOgni giorno un nuovo bollettino di pericolo incendi boschivi.\n<a href=\"https://www.ambienteveneto.it/stazioni/incendi/index.html\">Ulteriori informazioni</a>\nProssimo bollettino domani pomeriggio!"%(date))
+            caption="🔥🌲<b>NUOVO BOLLETTINO %s</b>\nOgni giorno un nuovo bollettino di pericolo incendi boschivi.\n<a href=\"https://www.ambienteveneto.it/incendi/index.html\">Ulteriori informazioni</a>\nProssimo bollettino domani pomeriggio!"%(date))
         )
         media.append(InputMediaPhoto(media=open(table_path, 'rb')))
 

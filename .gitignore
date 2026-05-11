@@ -2,6 +2,7 @@
 aib-venv/
 venv/
 __pycache__/
+.dev-output/
 log.txt
 media/
 *.csv

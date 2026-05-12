@@ -177,6 +177,48 @@ Run the suite with:
 PYTHONPATH=. pytest -q
 ```
 
+## Run all collectors
+
+To run all currently implemented collectors and persist their raw and parsed payloads:
+
+```bash
+python scripts/run_all_collectors.py --fixtures
+```
+
+This is the safest local mode because it uses the checked-in fixtures for Veneto, Emilia-Romagna and Toscana.
+
+To try live sources instead:
+
+```bash
+python scripts/run_all_collectors.py
+```
+
+To enable SSL verification for live sources:
+
+```bash
+python scripts/run_all_collectors.py --verify-ssl
+```
+
+Each successful run prints the paths of:
+
+- the raw payload JSON for that collector
+- the parsed normalized JSON for that collector
+- the aggregated daily JSON combining all successful collectors
+
+Generated files are written under [.dev-output/connectors](.dev-output/connectors), typically:
+
+- [.dev-output/connectors/veneto/latest/raw.json](.dev-output/connectors/veneto/latest/raw.json)
+- [.dev-output/connectors/veneto/latest/parsed.json](.dev-output/connectors/veneto/latest/parsed.json)
+- [.dev-output/connectors/emilia_romagna/latest/parsed.json](.dev-output/connectors/emilia_romagna/latest/parsed.json)
+- [.dev-output/connectors/toscana/latest/parsed.json](.dev-output/connectors/toscana/latest/parsed.json)
+- [.dev-output/connectors/daily/latest.json](.dev-output/connectors/daily/latest.json)
+
+To inspect the aggregate quickly from shell:
+
+```bash
+python -m json.tool .dev-output/connectors/daily/latest.json | head -n 80
+```
+
 ## Disclaimer
 
 This tool is intended to improve access to official information, not replace official directives from Civil Protection authorities.

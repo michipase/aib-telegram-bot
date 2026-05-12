@@ -180,6 +180,8 @@ class ConnectorOrchestrator:
             return [self._to_serializable(item) for item in payload]
         if isinstance(payload, tuple):
             return [self._to_serializable(item) for item in payload]
+        if isinstance(payload, bytes):
+            return payload.decode("latin-1", errors="replace")
         if isinstance(payload, (datetime, date)):
             return payload.isoformat()
         return payload

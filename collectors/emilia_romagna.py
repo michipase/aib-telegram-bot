@@ -12,6 +12,9 @@ from .base import Connector
 
 
 EMILIA_ROMAGNA_URL = "https://www.arpae.it/it/meteo/avvisi/bollettino-incendi-boschivi"
+EMILIA_ROMAGNA_FALLBACK_URL = (
+    "https://allertameteo.regione.emilia-romagna.it/o/compila-allerta-portlet/feed?feed=allerte-bollettini"
+)
 
 
 @dataclass(frozen=True)
@@ -69,9 +72,25 @@ class EmiliaRomagnaConnector(Connector):
         )
 
     def fetch_source(self) -> str:
-        return self.get_text(EMILIA_ROMAGNA_URL)
+        try:
+            return self.get_text(EMILIA_ROMAGNA_URL)
+        except Exception:
+            return self.get_text(EMILIA_ROMAGNA_FALLBACK_URL)
 
     def parse_bulletin(self, raw_source: str) -> EmiliaRomagnaBulletin:
+        if self._is_atom_feed(raw_source):
+            published_at = self._extract_atom_feed_published_at(raw_source)
+            return EmiliaRomagnaBulletin(
+                source_id=self.source_id,
+                source_url=EMILIA_ROMAGNA_FALLBACK_URL,
+                days=[
+                    EmiliaRomagnaDay(
+                        day=published_at,
+                        zones=[],
+                    )
+                ],
+            )
+
         soup = BeautifulSoup(raw_source, "html.parser")
         page_text = soup.get_text(" ", strip=True)
         published_at = self._extract_published_at(page_text)
@@ -221,6 +240,23 @@ class EmiliaRomagnaConnector(Connector):
 
         try:
             return datetime.strptime(match.group(1), "%d/%m/%Y")
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _is_atom_feed(source_text: str) -> bool:
+        lowered = source_text.lower()
+        return "<feed" in lowered and "www.w3.org/2005/atom" in lowered
+
+    @staticmethod
+    def _extract_atom_feed_published_at(source_text: str) -> datetime | None:
+        match = re.search(r"<updated>([^<]+)</updated>", source_text)
+        if not match:
+            return None
+
+        updated = match.group(1).strip()
+        try:
+            return datetime.strptime(updated, "%Y-%m-%dT%H:%M:%SZ")
         except ValueError:
             return None
 

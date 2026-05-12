@@ -140,6 +140,20 @@ See:
 - `docs/DATA_SOURCES_ITALY.md`
 - `docs/ROADMAP.md`
 
+## Regional connector tests
+
+The repository now includes a checked-in Emilia-Romagna example connector and a stored expected output fixture for inspection:
+
+- `tests/test_emilia_romagna_connector.py`
+- `tests/fixtures/emilia_romagna_bulletin_sample.html`
+- `tests/fixtures/emilia_romagna_expected_output.json`
+
+Run the suite with:
+
+```bash
+PYTHONPATH=. pytest -q
+```
+
 ## Disclaimer
 
 This tool is intended to improve access to official information, not replace official directives from Civil Protection authorities.

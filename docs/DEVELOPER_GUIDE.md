@@ -215,6 +215,20 @@ CONNECTOR_REGISTRY = {
 }
 ```
 
+### 6. Save and Inspect Output
+
+For the Emilia-Romagna connector, the repository keeps an example HTML bulletin and the expected parsed output under `tests/fixtures/` so you can compare local runs against a checked-in reference.
+
+- HTML fixture: `tests/fixtures/emilia_romagna_bulletin_sample.html`
+- Expected parsed output: `tests/fixtures/emilia_romagna_expected_output.json`
+- Integration-style test: `tests/test_emilia_romagna_connector.py`
+
+Use this command to validate the connector locally:
+
+```bash
+PYTHONPATH=. pytest -q tests/test_emilia_romagna_connector.py
+```
+
 ---
 
 ## Common Patterns & Utilities

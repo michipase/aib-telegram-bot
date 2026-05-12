@@ -1,144 +1,66 @@
-import os
-import json
 import asyncio
-from bs4 import BeautifulSoup
-import pandas as pd
-from telegram import Bot, InputMediaPhoto
+import json
+import logging
+import os
 from datetime import datetime
-import numpy as np
-import imgkit
+
 from dotenv import load_dotenv
 
-from collectors import VenetoConnector
+from collector import collect_veneto
+from notify import send_daily_bulletin
+from render import render_bulletin_images
+from transform import build_render_payload
 
-# locale.setlocale(locale.LC_TIME, 'it_IT')
 
-try:
-    BOT_TOKEN = os.environ['BOT_TOKEN']
-    GROUP_CHAT_ID = os.environ['GROUP_CHAT_ID']
-except:
+LOGGER = logging.getLogger("aib-bot")
+
+
+def _get_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise RuntimeError(f"Missing required env var: {name}")
+    return value
+
+
+def _get_bool_env(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _log_event(event: str, **payload: object) -> None:
+    LOGGER.info(json.dumps({"event": event, **payload}, ensure_ascii=False))
+
+
+async def main() -> None:
     load_dotenv()
-    BOT_TOKEN = os.getenv('BOT_TOKEN')    
-    GROUP_CHAT_ID = os.getenv('GROUP_CHAT_ID')    
+    bot_token = _get_env("BOT_TOKEN")
+    group_chat_id = _get_env("GROUP_CHAT_ID")
+    verify_ssl = _get_bool_env("VENETO_SOURCE_VERIFY_SSL", default=True)
 
-if BOT_TOKEN is None or GROUP_CHAT_ID is None:
-    print('Missing Tokens')
-    quit()
-bot = Bot(token=BOT_TOKEN)
+    _log_event("run_started", verify_ssl=verify_ssl)
+    collected = collect_veneto("zone.json", verify_ssl=verify_ssl)
+    transformed = build_render_payload(collected.bulletin, collected.map_svg)
 
-def color_row(row):
-    try:
-        if row['INDICE'] <= 2:
-            return ['background-color: #00ff00'] * len(row)
-        elif row['INDICE'] == 3:
-            return ['background-color: #ffff00'] * len(row)
-        elif row['INDICE'] == 4:
-            return ['background-color: #ffaa00'] * len(row)
-        else:
-            return ['background-color: #ff0000'] * len(row)
-    except:
-        return ['background-color: #cccccc'] * len(row)
+    output_day = collected.bulletin.valid_for_date.strftime("%Y%m%d")
+    rendered = render_bulletin_images(transformed, output_day=output_day, media_dir="media")
 
-def calc_risk(indice):
-    try:
-        if indice <= 2:
-            return "BASSO"
-        elif indice == 3:
-            return "MEDIO"
-        elif indice == 4:
-            return "ALTO"
-        else:
-            return "MOLTO ALTO"
-    except:
-        return "ND"
+    await send_daily_bulletin(
+        bot_token=bot_token,
+        chat_id=group_chat_id,
+        map_path=rendered.map_path,
+        table_path=rendered.table_path,
+        bulletin_date=transformed.display_date,
+    )
+    _log_event("run_completed", output_day=output_day, timestamp=datetime.utcnow().isoformat())
 
-def set_fill(id,df):
-    try:
-        a = df.loc[df['ZONA'] == id, 'INDICE']
-        indice = a.iloc[0]
-
-        if indice <= 2:
-            return "#00ff00"
-        elif indice == 3:
-            return "#ffff00"
-        elif indice == 4:
-            return "#ffaa00"
-        else:
-            return "#ff0000"
-    except:
-        return "#cccccc"
-
-
-
-async def main():
-    with open("log.txt", "w+") as log:
-        connector = VenetoConnector(
-            "zone.json",
-            verify_ssl=os.getenv("VENETO_SOURCE_VERIFY_SSL", "false").lower() == "true",
-        )
-        bulletin = connector.parse_bulletin(connector.fetch_source())
-        date = bulletin.valid_for_date.strftime("%d/%m/%y")
-        df = pd.DataFrame([entry.to_dict() for entry in bulletin.entries])
-        df.rename(columns={"zone_id": "id", "zone_name": "name", "fwi": "FWI", "indice": "INDICE", "risk_level": "RISCHIO"}, inplace=True)
-
-        ## MAP
-        map_soup = BeautifulSoup(connector.fetch_map_svg(), 'lxml')
-        gs = map_soup.find_all(name="g", id=lambda value: value and "GI_" in value)
-        for g in gs:
-            g['fill'] = set_fill(g['id'][3:],df)
-        map_svg = map_soup.prettify()
-
-        # make it cool
-        formatted_table = df.sort_values('name', ignore_index=True)[['name', 'FWI', 'INDICE', 'RISCHIO']]
-
-        print(formatted_table)
-
-        styled_df = formatted_table.style \
-            .apply(color_row, axis=1) \
-            .format(precision=2, thousands=".", decimal=",") \
-            .set_caption("Rischio incendio 🔥🌲</br>Aggiornamento: <b>%s</b>"%(date))
-
-
-        styled_html = styled_df.to_html(index=False, classes="df_style.css")
-
-        output_day = bulletin.valid_for_date.strftime("%Y%m%d")
-        table_path = 'media/%s_table.jpg'%(output_day)
-        map_path = 'media/%s_map.jpg'%(output_day)
-
-        table = imgkit.from_string(
-            styled_html,
-            table_path,
-            options={
-                "width": 600
-            },
-            css="style/df_style.css",
-        )
-        map = imgkit.from_string(
-            map_svg,
-            map_path,
-            options={
-                "width": 600
-            }
-        )
-
-        media = []
-        media.append(InputMediaPhoto(
-            media=open(map_path, 'rb'),
-            parse_mode="HTML", 
-            caption="🔥🌲<b>NUOVO BOLLETTINO %s</b>\nOgni giorno un nuovo bollettino di pericolo incendi boschivi.\n<a href=\"https://www.ambienteveneto.it/incendi/index.html\">Ulteriori informazioni</a>\nProssimo bollettino domani pomeriggio!"%(date))
-        )
-        media.append(InputMediaPhoto(media=open(table_path, 'rb')))
-
-        await bot.send_media_group(
-            GROUP_CHAT_ID,
-            media=media,
-        )
-
-    
 
 if __name__ == "__main__":
-    if not os.path.exists("media"):
-        os.makedirs("media")
-
-    asyncio.run(main())
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    try:
+        asyncio.run(main())
+    except Exception as exc:
+        _log_event("run_failed", error=str(exc))
+        raise
     

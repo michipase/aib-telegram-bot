@@ -1,35 +1,39 @@
 {
   "source_id": "emilia_romagna",
   "source_url": "https://www.arpae.it/it/meteo/avvisi/bollettino-incendi-boschivi",
-  "published_at": "2026-05-11T00:00:00",
-  "entries": [
+  "days": [
     {
-      "zone_id": "ER-PC",
-      "zone_name": "Piacenza",
-      "risk_level": "BASSO",
-      "indice": 2,
-      "fwi": 5.4
-    },
-    {
-      "zone_id": "ER-BO",
-      "zone_name": "Bologna",
-      "risk_level": "ALTO",
-      "indice": 4,
-      "fwi": 18.0
-    },
-    {
-      "zone_id": "ER-APP",
-      "zone_name": "Appennino Romagnolo",
-      "risk_level": "MOLTO ALTO",
-      "indice": 5,
-      "fwi": 22.0
-    },
-    {
-      "zone_id": "ER-UNK-AREA-SPERIME",
-      "zone_name": "Area sperimentale",
-      "risk_level": "MEDIO",
-      "indice": null,
-      "fwi": null
+      "day": "2026-05-11T00:00:00",
+      "zones": [
+        {
+          "zone_id": "ER-PC",
+          "zone_name": "Piacenza",
+          "risk_level": "BASSO",
+          "indice": 2,
+          "fwi": 5.4
+        },
+        {
+          "zone_id": "ER-BO",
+          "zone_name": "Bologna",
+          "risk_level": "ALTO",
+          "indice": 4,
+          "fwi": 18.0
+        },
+        {
+          "zone_id": "ER-APP",
+          "zone_name": "Appennino Romagnolo",
+          "risk_level": "MOLTO ALTO",
+          "indice": 5,
+          "fwi": 22.0
+        },
+        {
+          "zone_id": "ER-UNK-AREA-SPERIME",
+          "zone_name": "Area sperimentale",
+          "risk_level": "MEDIO",
+          "indice": null,
+          "fwi": null
+        }
+      ]
     }
   ]
 }

@@ -31,7 +31,10 @@ class VenetoConnectorTest(unittest.TestCase):
 
         self.assertEqual(bulletin.source_id, "veneto")
         self.assertEqual(bulletin.valid_for_date.strftime("%Y-%m-%d"), "2026-05-11")
+        self.assertEqual(len(bulletin.days), 1)
+        self.assertEqual(bulletin.days[0].day.strftime("%Y-%m-%d"), "2026-05-11")
         self.assertEqual(len(bulletin.entries), 2)
+        self.assertEqual(len(bulletin.days[0].zones), 2)
         self.assertEqual(bulletin.entries[0].zone_id, "01")
         self.assertEqual(bulletin.entries[0].risk_level, "BASSO")
         self.assertEqual(bulletin.entries[1].zone_name, "Provincia di Padova Non Montana")
@@ -51,4 +54,5 @@ class VenetoConnectorTest(unittest.TestCase):
 
         parsed_payload = json.loads(result.parsed_path.read_text(encoding="utf-8"))
         self.assertEqual(parsed_payload["source_id"], "veneto")
-        self.assertEqual(len(parsed_payload["entries"]), 2)
+        self.assertEqual(len(parsed_payload["days"]), 1)
+        self.assertEqual(len(parsed_payload["days"][0]["zones"]), 2)

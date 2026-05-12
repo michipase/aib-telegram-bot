@@ -29,7 +29,10 @@ class EmiliaRomagnaConnectorTest(unittest.TestCase):
         bulletin = self.connector.run()
 
         self.assertEqual(bulletin.source_id, "emilia_romagna")
+        self.assertEqual(len(bulletin.days), 1)
+        self.assertEqual(bulletin.days[0].day.strftime("%Y-%m-%d"), "2026-05-11")
         self.assertEqual(len(bulletin.entries), 4)
+        self.assertEqual(len(bulletin.days[0].zones), 4)
         self.assertEqual(bulletin.entries[0].zone_id, "ER-PC")
         self.assertEqual(bulletin.entries[1].zone_id, "ER-BO")
 
@@ -67,6 +70,8 @@ class EmiliaRomagnaConnectorTest(unittest.TestCase):
     def test_parse_without_table_returns_empty_entries(self) -> None:
         bulletin = self.connector.parse_bulletin("<html><body>Nessuna tabella</body></html>")
         self.assertEqual(bulletin.entries, [])
+        self.assertEqual(len(bulletin.days), 1)
+        self.assertEqual(bulletin.days[0].zones, [])
 
     def test_orchestrator_persists_fixture_run_output(self) -> None:
         orchestrator = ConnectorOrchestrator(self.output_root)

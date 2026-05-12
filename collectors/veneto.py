@@ -29,8 +29,21 @@ class VenetoRiskEntry:
 class VenetoBulletin:
     source_id: str
     source_url: str
-    valid_for_date: datetime
-    entries: list[VenetoRiskEntry]
+    days: list["VenetoDay"]
+
+    @property
+    def valid_for_date(self) -> datetime:
+        return self.days[0].day
+
+    @property
+    def entries(self) -> list[VenetoRiskEntry]:
+        return self.days[0].zones
+
+
+@dataclass(frozen=True)
+class VenetoDay:
+    day: datetime
+    zones: list[VenetoRiskEntry]
 
 
 class VenetoConnector(Connector):
@@ -91,8 +104,12 @@ class VenetoConnector(Connector):
         return VenetoBulletin(
             source_id=self.source_id,
             source_url=VENETO_FWI_URL,
-            valid_for_date=valid_for_date,
-            entries=entries,
+            days=[
+                VenetoDay(
+                    day=valid_for_date,
+                    zones=entries,
+                )
+            ],
         )
 
     def _load_zone_lookup(self) -> dict[str, str]:

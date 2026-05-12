@@ -154,6 +154,20 @@ Run the suite with:
 PYTHONPATH=. pytest -q
 ```
 
+## Cross-source daily output
+
+The orchestrator can now generate a single cross-source daily file under:
+
+- `.dev-output/connectors/daily/YYYY-MM-DD.json`
+- `.dev-output/connectors/daily/latest.json`
+
+Payload shape:
+
+- `day`: selected daily partition (`YYYY-MM-DD`)
+- `generated_at`: file generation timestamp
+- `sources`: source-level summary (source_id, source_url, zones_count)
+- `zones`: flattened list of all zones for that day, each enriched with `source_id`
+
 ## Disclaimer
 
 This tool is intended to improve access to official information, not replace official directives from Civil Protection authorities.

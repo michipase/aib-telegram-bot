@@ -111,17 +111,18 @@ Integration notes:
 ## Recommended normalized schema (minimum)
 
 - `source_id` (string)
-- `source_name` (string)
-- `region` (string)
-- `zone_id` (string)
-- `zone_name` (string)
-- `risk_index_raw` (number/string)
-- `risk_level_norm` (enum: low, medium, high, very_high, unknown)
-- `published_at` (datetime, UTC)
-- `valid_for_date` (date, local)
-- `geometry_ref` (zone geometry id)
 - `source_url` (string)
-- `ingested_at` (datetime)
+- `days` (array)
+  - `day` (datetime/date, nullable if source does not expose date)
+  - `zones` (array)
+    - `zone_id` (string)
+    - `zone_name` (string)
+    - `risk_level` (enum: BASSO, MEDIO, ALTO, MOLTO ALTO, ND)
+    - `indice` (number/integer, nullable)
+    - `fwi` (number/float, nullable)
+
+Compatibility note during migration:
+- connectors may expose helper properties like `entries` and `valid_for_date`/`published_at` for legacy consumers.
 
 ## Compliance and legal checks before public launch
 

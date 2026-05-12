@@ -30,8 +30,25 @@ class EmiliaRomagnaRiskEntry:
 class EmiliaRomagnaBulletin:
     source_id: str
     source_url: str
-    published_at: datetime | None
-    entries: list[EmiliaRomagnaRiskEntry]
+    days: list["EmiliaRomagnaDay"]
+
+    @property
+    def published_at(self) -> datetime | None:
+        if not self.days:
+            return None
+        return self.days[0].day
+
+    @property
+    def entries(self) -> list[EmiliaRomagnaRiskEntry]:
+        if not self.days:
+            return []
+        return self.days[0].zones
+
+
+@dataclass(frozen=True)
+class EmiliaRomagnaDay:
+    day: datetime | None
+    zones: list[EmiliaRomagnaRiskEntry]
 
 
 class EmiliaRomagnaConnector(Connector):
@@ -64,8 +81,12 @@ class EmiliaRomagnaConnector(Connector):
             return EmiliaRomagnaBulletin(
                 source_id=self.source_id,
                 source_url=EMILIA_ROMAGNA_URL,
-                published_at=published_at,
-                entries=[],
+                days=[
+                    EmiliaRomagnaDay(
+                        day=published_at,
+                        zones=[],
+                    )
+                ],
             )
 
         header_labels = [self._normalize_label(th.get_text(" ", strip=True)) for th in table.find_all("th")]
@@ -102,8 +123,12 @@ class EmiliaRomagnaConnector(Connector):
         return EmiliaRomagnaBulletin(
             source_id=self.source_id,
             source_url=EMILIA_ROMAGNA_URL,
-            published_at=published_at,
-            entries=entries,
+            days=[
+                EmiliaRomagnaDay(
+                    day=published_at,
+                    zones=entries,
+                )
+            ],
         )
 
     @staticmethod

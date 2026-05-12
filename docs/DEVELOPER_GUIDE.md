@@ -229,6 +229,15 @@ Use this command to validate the connector locally:
 PYTHONPATH=. pytest -q tests/test_emilia_romagna_connector.py
 ```
 
+### 7. Build a Single Daily Cross-Source File
+
+Use `ConnectorOrchestrator.run_daily_aggregation([...])` to run multiple connectors and produce one consolidated daily file:
+
+- `.dev-output/connectors/daily/YYYY-MM-DD.json`
+- `.dev-output/connectors/daily/latest.json`
+
+The output includes a source summary and a flattened zone list for the selected day.
+
 ---
 
 ## Common Patterns & Utilities

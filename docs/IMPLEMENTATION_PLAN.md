@@ -1,5 +1,7 @@
 # Implementation Plan - Multi-Region AIB Ingestion (Phase 1-2)
 
+This is the canonical tactical implementation plan. Content from the older phase task breakdown has been folded here to avoid duplicate planning documents.
+
 **Status:** DRAFT (Ready for Dev Team Kickoff)  
 **Prepared:** 2026-05-11  
 **Target Completion:** Phase 1 Week 6-8 (Veneto production baseline + 2 pilot regions)  

@@ -1,56 +1,75 @@
-# AIB Telegram Bot (Veneto) and National Expansion Plan
+# AIB Telegram Bot
 
-Unofficial project to publish daily wildfire risk updates (AIB) from official sources.
-
-Current production behavior:
-
-- Reads official Veneto daily data.
-- Generates a risk map image and a summary table image.
-- Sends both to Telegram on a daily schedule.
+Official-source wildfire risk bot for Italy. The project currently runs Veneto in production and already includes connectors and fixtures for Emilia-Romagna.
 
 Public channel:
 - https://t.me/AIBVenetoBollettini
 
-## Why this project exists
+## Current state
 
-Associations, volunteers, and citizens often struggle to quickly understand:
+- Production flow: read Veneto daily data, render the risk map/table, send both to Telegram.
+- Extensible ingestion flow: region connectors in `collectors/` with normalized outputs and daily aggregation support.
+- Development output: connector runs and aggregated daily JSON are written under `.dev-output/connectors/`.
 
-- what is safe vs unsafe in a specific area,
-- whether conditions changed today,
-- where to find reliable official updates.
+## Canonical docs
 
-This project aims to make official wildfire-risk information easier to consume.
+- [docs/ROADMAP.md](docs/ROADMAP.md): strategic roadmap and future phases.
+- [docs/TECH_ANALYSIS.md](docs/TECH_ANALYSIS.md): current limitations and target architecture.
+- [docs/OFFICIAL_AIB_SOURCES_ITALY.md](docs/OFFICIAL_AIB_SOURCES_ITALY.md): canonical source inventory.
+- [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md): tactical implementation plan.
+- [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md): connector implementation pattern.
+- [docs/DATA_SOURCES_ITALY.md](docs/DATA_SOURCES_ITALY.md): source-selection criteria and normalized schema.
 
-## Current stack
+## Quick start
 
-- Python script runner
-- Requests + BeautifulSoup for data retrieval/parsing
-- Pandas for tabular transformation
-- imgkit/wkhtmltoimage for rendering images
-- python-telegram-bot for delivery
-- GitHub Actions for daily execution
+### 1) Install system dependencies
 
-## Repository structure
+Use:
 
-- `main.py`: current end-to-end script (collect, transform, render, notify)
-- `zone.json`: Veneto zone metadata
-- `style/df_style.css`: style for generated risk table
-- `.github/workflows/main.yml`: scheduled daily run
-- `VERSION`: app version in MAJOR.MINOR.PATCH format
-- `.githooks/pre-commit`: repository-managed hook for patch auto-bump
-- `scripts/bump-version.sh`: patch bump helper script
-- `docs/TECH_ANALYSIS.md`: technical code analysis and improvement areas
-- `docs/DATA_SOURCES_ITALY.md`: research and source strategy for Italy-wide data
-- `docs/ROADMAP.md`: product and engineering roadmap
+```bash
+./install.sh
+```
 
-## Data source in use today (Veneto)
+This installs Python and wkhtmltopdf/wkhtmltoimage dependencies needed by imgkit.
 
-- JSON risk data:
+### 2) Create and activate virtual environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3) Configure environment variables
+
+Copy `.env.example` to `.env` and set values:
+
+```env
+BOT_TOKEN=...
+GROUP_CHAT_ID=...
+```
+
+### 4) Run the current bot
+
+```bash
+python main.py
+```
+
+Generated media is saved under `media/`.
+
+## Runtime data
+
+- Veneto connector inputs:
 	- https://www.ambienteveneto.it/incendi/dati/FWI.json
-- Map SVG page:
 	- https://www.ambienteveneto.it/stazioni/incendi/venetorischio.html
+- Daily aggregated connector output:
+	- `.dev-output/connectors/daily/YYYY-MM-DD.json`
+	- `.dev-output/connectors/daily/latest.json`
 
-## Local setup
+## Notes
+
+- The repository is moving toward a single canonical Italy-wide daily JSON.
+- Use the docs above as the primary reference instead of the older per-topic notes.
 
 ### 1) Install system dependencies
 
@@ -86,8 +105,6 @@ python main.py
 ```
 
 Generated media is saved under `media/`.
-
-## Versioning
 
 - `VERSION` starts at `0.0.0`.
 - Patch (`x.y.Z`) is incremented automatically on each commit via pre-commit hook.
@@ -140,33 +157,13 @@ See:
 - `docs/DATA_SOURCES_ITALY.md`
 - `docs/ROADMAP.md`
 
-## Regional connector tests
-
-The repository now includes a checked-in Emilia-Romagna example connector and a stored expected output fixture for inspection:
-
-- `tests/test_emilia_romagna_connector.py`
-- `tests/fixtures/emilia_romagna_bulletin_sample.html`
-- `tests/fixtures/emilia_romagna_expected_output.json`
+## Testing
 
 Run the suite with:
 
 ```bash
 PYTHONPATH=. pytest -q
 ```
-
-## Cross-source daily output
-
-The orchestrator can now generate a single cross-source daily file under:
-
-- `.dev-output/connectors/daily/YYYY-MM-DD.json`
-- `.dev-output/connectors/daily/latest.json`
-
-Payload shape:
-
-- `day`: selected daily partition (`YYYY-MM-DD`)
-- `generated_at`: file generation timestamp
-- `sources`: source-level summary (source_id, source_url, zones_count)
-- `zones`: flattened list of all zones for that day, each enriched with `source_id`
 
 ## Disclaimer
 

@@ -1,5 +1,9 @@
 # Official AIB Sources - Italy
 
+This is the canonical source inventory for the project.
+
+Use this file as the single reference for source readiness, institutional entry points, and per-region bulletin endpoints. Older source lists and executive summaries should point here instead of duplicating the inventory.
+
 Last updated: 2026-05-11
 
 ## Scope

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import asdict, dataclass, is_dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -64,11 +65,15 @@ class ConnectorOrchestrator:
         latest_label: str | None = "latest",
     ) -> DailyAggregationResult:
         serialized_bulletins: list[dict[str, Any]] = []
+        logger = logging.getLogger(__name__)
         for connector in connectors:
-            parsed_payload = connector.parse_bulletin(connector.fetch_source())
-            serialized_payload = self._to_serializable(parsed_payload)
-            if isinstance(serialized_payload, dict):
-                serialized_bulletins.append(serialized_payload)
+            try:
+                parsed_payload = connector.parse_bulletin(connector.fetch_source())
+                serialized_payload = self._to_serializable(parsed_payload)
+                if isinstance(serialized_payload, dict):
+                    serialized_bulletins.append(serialized_payload)
+            except Exception as exc:
+                logger.warning("Connector %s failed: %s", connector.source_id, exc)
 
         selected_day = self._resolve_target_day(serialized_bulletins, target_day=target_day)
         aggregated_payload = self._build_daily_payload(serialized_bulletins, day=selected_day)

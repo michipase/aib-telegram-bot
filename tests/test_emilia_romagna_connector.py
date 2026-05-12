@@ -84,3 +84,47 @@ class EmiliaRomagnaConnectorTest(unittest.TestCase):
         expected_payload = json.loads(self.expected_output_path.read_text(encoding="utf-8"))
 
         self.assertEqual(parsed_payload, expected_payload)
+
+    def test_extract_latest_pdf_document_url_prefers_highest_bulletin_number(self) -> None:
+        html = """
+        <html><body>
+          <a href="/rischi-previsione-prevenzione/rischio-incendi/bollettini-incendi-boschivi/2026/bollettino-9-verde-3-10-maggio-2026.pdf">b9</a>
+          <a href="/rischi-previsione-prevenzione/rischio-incendi/bollettini-incendi-boschivi/2026/copy_of_bollettino-10-verde-11-17-maggio-2026.pdf">copy</a>
+          <a href="/rischi-previsione-prevenzione/rischio-incendi/bollettini-incendi-boschivi/2026/bollettino-10-verde-11-17-maggio-2026.pdf">b10</a>
+        </body></html>
+        """
+        url = self.connector._extract_latest_pdf_document_url(
+            html,
+            base_url="https://protezionecivile.regione.emilia-romagna.it/rischi-previsione-prevenzione/rischio-incendi/bollettini-incendi-boschivi/2026",
+        )
+        self.assertIn("bollettino-10-verde-11-17-maggio-2026.pdf", url)
+        self.assertNotIn("copy_of", url)
+
+    def test_extract_pdf_download_url_from_wrapper_html(self) -> None:
+        wrapper_html = """
+        <html><body>
+          <a href="/rischi-previsione-prevenzione/rischio-incendi/bollettini-incendi-boschivi/2026/bollettino-10-verde-11-17-maggio-2026.pdf/@@download/file">Scarica</a>
+        </body></html>
+        """
+        download_url = self.connector._extract_pdf_download_url(
+            wrapper_html,
+            base_url="https://protezionecivile.regione.emilia-romagna.it/rischi-previsione-prevenzione/rischio-incendi/bollettini-incendi-boschivi/2026/bollettino-10-verde-11-17-maggio-2026.pdf",
+        )
+        self.assertTrue(download_url.endswith("@@download/file"))
+
+    def test_parse_pdf_bulletin_builds_single_regional_entry(self) -> None:
+        payload = {
+            "kind": "pdf",
+            "source_url": "https://example.test/bollettino-10-verde-11-17-maggio-2026.pdf",
+            "download_url": "https://example.test/bollettino-10-verde-11-17-maggio-2026.pdf/@@download/file",
+            "bulletin_name": "bollettino-10-verde-11-17-maggio-2026.pdf",
+        }
+
+        bulletin = self.connector.parse_bulletin(payload)
+        self.assertEqual(bulletin.source_url, payload["source_url"])
+        self.assertEqual(len(bulletin.days), 1)
+        self.assertEqual(len(bulletin.entries), 1)
+        self.assertEqual(bulletin.entries[0].zone_id, "ER-REG")
+        self.assertEqual(bulletin.entries[0].risk_level, "BASSO")
+        self.assertEqual(bulletin.entries[0].indice, 2)
+        self.assertEqual(bulletin.days[0].day.strftime("%Y-%m-%d"), "2026-05-11")

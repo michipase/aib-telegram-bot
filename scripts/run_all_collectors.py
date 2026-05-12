@@ -7,7 +7,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from collectors import ConnectorOrchestrator, EmiliaRomagnaConnector, ToscanaConnector, VenetoConnector
+from collectors import (
+    AltoAdigeBolzanoConnector,
+    ConnectorOrchestrator,
+    EmiliaRomagnaConnector,
+    ToscanaConnector,
+    VenetoConnector,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,11 +50,21 @@ class FixtureToscanaConnector(ToscanaConnector):
         }
 
 
+class FixtureAltoAdigeBolzanoConnector(AltoAdigeBolzanoConnector):
+    def __init__(self) -> None:
+        super().__init__(verify_ssl=False)
+        self.fixture_path = ROOT / "tests/fixtures/alto_adige_bulletin_sample.html"
+
+    def fetch_source(self) -> str:
+        return self.fixture_path.read_text(encoding="utf-8")
+
+
 def build_live_connectors(*, verify_ssl: bool) -> list:
     return [
         VenetoConnector(ROOT / "zone.json", verify_ssl=verify_ssl),
         EmiliaRomagnaConnector(verify_ssl=verify_ssl),
         ToscanaConnector(verify_ssl=verify_ssl),
+        AltoAdigeBolzanoConnector(verify_ssl=verify_ssl),
     ]
 
 
@@ -57,6 +73,7 @@ def build_fixture_connectors() -> list:
         FixtureVenetoConnector(),
         FixtureEmiliaRomagnaConnector(),
         FixtureToscanaConnector(),
+        FixtureAltoAdigeBolzanoConnector(),
     ]
 
 

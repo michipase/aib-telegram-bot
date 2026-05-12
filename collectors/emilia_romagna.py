@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
+from urllib.parse import urljoin
 from typing import Any
 
 from bs4 import BeautifulSoup
@@ -13,7 +14,11 @@ from .base import Connector
 
 EMILIA_ROMAGNA_URL = "https://www.arpae.it/it/meteo/avvisi/bollettino-incendi-boschivi"
 EMILIA_ROMAGNA_FALLBACK_URL = (
-    "https://allertameteo.regione.emilia-romagna.it/o/compila-allerta-portlet/feed?feed=allerte-bollettini"
+    "https://www.arpae.it/it/meteo/avvisi"
+)
+EMILIA_ROMAGNA_PDF_INDEX_URL = (
+    "https://protezionecivile.regione.emilia-romagna.it/rischi-previsione-prevenzione/"
+    "rischio-incendi/bollettini-incendi-boschivi/{year}"
 )
 
 
@@ -71,25 +76,15 @@ class EmiliaRomagnaConnector(Connector):
             retries=retries,
         )
 
-    def fetch_source(self) -> str:
+    def fetch_source(self) -> Any:
         try:
             return self.get_text(EMILIA_ROMAGNA_URL)
         except Exception:
-            return self.get_text(EMILIA_ROMAGNA_FALLBACK_URL)
+            return self._fetch_pdf_source()
 
-    def parse_bulletin(self, raw_source: str) -> EmiliaRomagnaBulletin:
-        if self._is_atom_feed(raw_source):
-            published_at = self._extract_atom_feed_published_at(raw_source)
-            return EmiliaRomagnaBulletin(
-                source_id=self.source_id,
-                source_url=EMILIA_ROMAGNA_FALLBACK_URL,
-                days=[
-                    EmiliaRomagnaDay(
-                        day=published_at,
-                        zones=[],
-                    )
-                ],
-            )
+    def parse_bulletin(self, raw_source: Any) -> EmiliaRomagnaBulletin:
+        if isinstance(raw_source, dict) and raw_source.get("kind") == "pdf":
+            return self._parse_pdf_bulletin(raw_source)
 
         soup = BeautifulSoup(raw_source, "html.parser")
         page_text = soup.get_text(" ", strip=True)
@@ -149,6 +144,138 @@ class EmiliaRomagnaConnector(Connector):
                 )
             ],
         )
+
+    def _fetch_pdf_source(self) -> dict[str, str]:
+        now = datetime.now(UTC)
+        index_url = EMILIA_ROMAGNA_PDF_INDEX_URL.format(year=now.year)
+        index_html = self.get_text(index_url)
+
+        bulletin_url = self._extract_latest_pdf_document_url(index_html, base_url=index_url)
+        wrapper_html = self.get_text(bulletin_url)
+        download_url = self._extract_pdf_download_url(wrapper_html, base_url=bulletin_url)
+
+        return {
+            "kind": "pdf",
+            "source_url": bulletin_url,
+            "download_url": download_url,
+            "bulletin_name": bulletin_url.rsplit("/", 1)[-1],
+        }
+
+    def _parse_pdf_bulletin(self, payload: dict[str, str]) -> EmiliaRomagnaBulletin:
+        bulletin_name = payload.get("bulletin_name", "")
+        published_at = self._extract_date_from_pdf_name(bulletin_name)
+        risk_level = self._extract_risk_from_pdf_name(bulletin_name)
+        indice = self._risk_to_indice(risk_level)
+
+        entry = EmiliaRomagnaRiskEntry(
+            zone_id="ER-REG",
+            zone_name="Emilia-Romagna",
+            risk_level=risk_level,
+            indice=indice,
+            fwi=None,
+        )
+
+        return EmiliaRomagnaBulletin(
+            source_id=self.source_id,
+            source_url=payload.get("source_url", EMILIA_ROMAGNA_PDF_INDEX_URL.format(year=datetime.now(UTC).year)),
+            days=[
+                EmiliaRomagnaDay(
+                    day=published_at,
+                    zones=[entry],
+                )
+            ],
+        )
+
+    @staticmethod
+    def _extract_latest_pdf_document_url(index_html: str, *, base_url: str) -> str:
+        normalized = index_html.replace("\\u002F", "/").replace("\\/", "/")
+
+        candidates = set(
+            re.findall(r"(?:https?://[^\"\s<>]+|/[^\"\s<>]+)\.pdf", normalized, flags=re.IGNORECASE)
+        )
+        filtered = [
+            item
+            for item in candidates
+            if "bollettino" in item.lower()
+            and "copy" not in item.lower()
+            and "rischio-incendi/bollettini-incendi-boschivi" in item
+        ]
+        if not filtered:
+            raise ValueError("No Emilia-Romagna AIB PDF bulletin found on index page")
+
+        def rank(url: str) -> tuple[int, str]:
+            match = re.search(r"bollettino-(\d+)", url, flags=re.IGNORECASE)
+            number = int(match.group(1)) if match else -1
+            return number, url
+
+        best = sorted(filtered, key=rank)[-1]
+        return urljoin(base_url, best)
+
+    @staticmethod
+    def _extract_pdf_download_url(wrapper_html: str, *, base_url: str) -> str:
+        soup = BeautifulSoup(wrapper_html, "html.parser")
+        anchor = soup.find("a", href=re.compile(r"@@download/file", re.IGNORECASE))
+        if not anchor or not anchor.get("href"):
+            raise ValueError("Unable to resolve PDF download URL for Emilia-Romagna bulletin")
+        return urljoin(base_url, str(anchor["href"]))
+
+    @staticmethod
+    def _extract_date_from_pdf_name(name: str) -> datetime | None:
+        months = {
+            "gennaio": 1,
+            "febbraio": 2,
+            "marzo": 3,
+            "aprile": 4,
+            "maggio": 5,
+            "giugno": 6,
+            "luglio": 7,
+            "agosto": 8,
+            "settembre": 9,
+            "ottobre": 10,
+            "novembre": 11,
+            "dicembre": 12,
+        }
+
+        normalized = name.lower().replace("_", "-")
+        match = re.search(
+            r"-(\d{1,2})(?:-\d{1,2})?-(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)-(\d{4})",
+            normalized,
+        )
+        if not match:
+            return None
+
+        day = int(match.group(1))
+        month = months.get(match.group(2))
+        year = int(match.group(3))
+        if month is None:
+            return None
+        try:
+            return datetime(year, month, day)
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _extract_risk_from_pdf_name(name: str) -> str:
+        normalized = name.lower().replace("_", "-")
+        if "verde" in normalized:
+            return "BASSO"
+        if "giallo" in normalized:
+            return "MEDIO"
+        if "arancione" in normalized:
+            return "ALTO"
+        if "rosso" in normalized:
+            return "MOLTO ALTO"
+        return "ND"
+
+    @staticmethod
+    def _risk_to_indice(risk_level: str) -> int | None:
+        mapping = {
+            "BASSO": 2,
+            "MEDIO": 3,
+            "ALTO": 4,
+            "MOLTO ALTO": 5,
+        }
+        return mapping.get(risk_level)
 
     @staticmethod
     def _select_data_table(soup: BeautifulSoup) -> Any:

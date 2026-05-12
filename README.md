@@ -47,6 +47,13 @@ Copy `.env.example` to `.env` and set values:
 ```env
 BOT_TOKEN=...
 GROUP_CHAT_ID=...
+ALERT_CHAT_ID=... # optional, defaults to GROUP_CHAT_ID
+```
+
+Optional network flag:
+
+```env
+VENETO_SOURCE_VERIFY_SSL=true
 ```
 
 ### 4) Run the current bot
@@ -65,6 +72,12 @@ Generated media is saved under `media/`.
 - Daily aggregated connector output:
 	- `.dev-output/connectors/daily/YYYY-MM-DD.json`
 	- `.dev-output/connectors/daily/latest.json`
+
+## Failure alerting
+
+- On unhandled errors, the bot logs a structured `run_failed` event.
+- It also sends a Telegram alert message to `ALERT_CHAT_ID`.
+- If `ALERT_CHAT_ID` is not set, alerts are sent to `GROUP_CHAT_ID`.
 
 ## Notes
 
@@ -133,10 +146,9 @@ Required repository secrets:
 
 ## Known limitations in current implementation
 
-- Script is monolithic and Veneto-only.
-- Some network calls currently disable TLS verification.
-- Scraping and rendering are coupled to external page structure.
-- Error handling is broad in some sections, reducing observability.
+- Current production bulletin flow is still Veneto-only.
+- Rendering depends on external HTML/SVG stability of source pages.
+- Multi-region notifications are not yet wired into the daily sender.
 
 For full analysis, see:
 

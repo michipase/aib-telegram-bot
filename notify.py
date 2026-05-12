@@ -30,3 +30,19 @@ async def send_daily_bulletin(
             InputMediaPhoto(media=table_file),
         ]
         await bot.send_media_group(chat_id=chat_id, media=media)
+
+
+async def send_failure_alert(
+    *,
+    bot_token: str,
+    chat_id: str,
+    error: str,
+    occurred_at_utc: str,
+) -> None:
+    bot = Bot(token=bot_token)
+    message = (
+        "AIB bot daily run failed.\n"
+        f"Time (UTC): {occurred_at_utc}\n"
+        f"Error: {error}"
+    )
+    await bot.send_message(chat_id=chat_id, text=message)
